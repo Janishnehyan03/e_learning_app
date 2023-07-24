@@ -1,111 +1,147 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
-import {View, Text, Image, TouchableOpacity} from 'react-native';
+import {Image, ScrollView, Text, TouchableOpacity, View} from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import Axios from '../utils/Axios';
 
-const CourseDetailsPage = ({slug, thumbnail}) => {
-  console.log(slug);
-  const [videoLoaded, setVideoLoaded] = useState(false);
+const CourseDetailsPage = ({route}) => {
+  const {slug, thumbnail} = route.params;
   const [courseData, setCourseData] = useState(null);
-  const [videoUrl, setVideoUrl] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const navigation = useNavigation();
 
-  const convertUrlToId = url => {
-    var regExp =
-      /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    var match = url.match(regExp);
-    if (match && match[2].length == 11) {
-      setVideoUrl(match[2]);
-      return match[2];
-    } else {
-      //error
+  const onYoutubeStateChange = event => {
+    if (event === 'ended') {
+      setIsPlaying(false);
     }
   };
-
-  useEffect(() => {
-    fetchCourseData();
-  }, []);
+  async function handleButton() {
+    const userExist = await AsyncStorage.getItem('username');
+    if (userExist) {
+      navigation.navigate('Payment', {
+        courseId: courseData._id,
+        thumbnail: courseData?.thumbnail,
+        title: courseData.title,
+        price: courseData.price,
+      });
+    } else {
+      navigation.navigate('Login');
+    }
+  }
 
   const fetchCourseData = async () => {
     try {
       const {data} = await Axios.get(`/course/${slug}`);
       setCourseData(data);
-      console.log(data);
-      convertUrlToId(data.lessons[0].videoUrl)
+      setIsPlaying(false);
     } catch (error) {
       console.error('Error loading course data', error);
     }
   };
-
-  const renderPlayer = player => {
-    return (
-      <View>
-        {videoLoaded ? (
-          player
-        ) : (
-          <View style={styles.thumbnailContainer}>
-            <Image source={{uri: thumbnail}} style={styles.thumbnail} />
-          </View>
-        )}
-        <Text style={styles.sectionTitle}>About the course</Text>
-        {courseData ? (
-          <View>
-            <Text style={styles.courseTitle}>{courseData.title}</Text>
-            <Text style={styles.amount}>
-              Amount: ₹{courseData.price.toString()}
-            </Text>
-            <Text style={styles.courseDescription}>
-              {courseData.description}
-            </Text>
-            <Text style={styles.sectionTitle}>Lessons</Text>
-            <View>
-              {courseData.videos.map((lesson, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.lessonContainer}
-                  onPress={() => {
-                    setVideoLoaded(true);
-                  }}>
-                  <View style={styles.playIconContainer}>
-                    <Text style={styles.playIcon}>▶</Text>
-                  </View>
-                  <Text style={styles.lessonTitle}>
-                    {lesson.videoTitle.toUpperCase()}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        ) : (
-          <Text style={styles.loadingText}>Loading course data...</Text>
-        )}
-      </View>
-    );
+  const getYoutubeVideoId = url => {
+    // Extract the video ID from the URL
+    const regExp = /^.*(youtu.be\/|v\/|e\/|u\/\w+\/|embed\/|v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+      return match[2];
+    } else {
+      // Invalid YouTube URL
+      return '';
+    }
   };
+  useEffect(() => {
+    fetchCourseData();
+  }, [slug]);
 
   return (
-    <YoutubePlayer
-      height={250}
-      videoId={videoUrl}
-      play={videoLoaded}
-      onChangeState={event => {
-        if (event === 'ended') {
-          setVideoLoaded(false);
-        }
-      }}
-      initialPlayerParams={{
-        controls: true,
-        loop: false,
-        modestbranding: true,
-      }}
-      renderLoader={() => (
-        <Text style={styles.loadingText}>Loading video...</Text>
-      )}>
-      {renderPlayer}
-    </YoutubePlayer>
+    <View style={styles.container}>
+      <ScrollView>
+        <View style={styles.thumbnailContainer}>
+          {isPlaying ? (
+            <YoutubePlayer
+              height={250}
+              videoId={getYoutubeVideoId(courseData?.previewVideo)}
+              play={true}
+              onChangeState={onYoutubeStateChange}
+            />
+          ) : (
+            <TouchableOpacity
+              onPress={() => setIsPlaying(true)}
+              style={styles.thumbnailOverlay}>
+              {courseData && (
+                <Image
+                  source={{uri: courseData?.thumbnail}}
+                  style={styles.thumbnail}
+                />
+              )}
+              <Ionicons
+                name="play-circle-outline"
+                size={48}
+                color="white"
+                style={styles.playIconThumbnail}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+        <ScrollView style={styles.contentContainer}>
+          <Text style={styles.title}>{courseData?.title}</Text>
+          <Text style={styles.description}>{courseData?.description}</Text>
+          <View style={styles.creatorContainer}>
+            <Text style={styles.creatorText}>Created by</Text>
+            <Text style={styles.creatorName}>{courseData?.creator?.name}</Text>
+            {courseData?.creator && (
+              <Image
+                source={{uri: courseData?.creator?.image}}
+                style={styles.creatorImage}
+              />
+            )}
+          </View>
+          <Text style={styles.priceText}>₹{courseData?.price}</Text>
+          <Text style={styles.lessonsHeading}>Lessons</Text>
+          {courseData?.videos.map((lesson, index) => (
+            <TouchableOpacity key={index} style={styles.lessonItem}>
+              <View style={styles.lessonItemContent}>
+                <Ionicons
+                  name="play-circle-outline"
+                  size={48}
+                  color="white"
+                  style={styles.playIcon}
+                />
+                <Text style={styles.lessonTitle}>{lesson?.videoTitle}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+          <View style={styles.enrollButtonContainer}>
+            <TouchableOpacity style={styles.enrollButton}>
+              <Text style={styles.enrollButtonText}>Enroll Now</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </ScrollView>
+      <View style={styles.buyButtonContainer}>
+        <TouchableOpacity title="BUY NOW" onPress={() => handleButton()}>
+          <Text
+            style={{textAlign: 'center', color: 'white', fontWeight: 'bold'}}>
+            Buy now
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 };
 
 const styles = {
+  container: {
+    flex: 1,
+  },
+  buyButtonContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    width: '100%',
+    backgroundColor: '#333',
+  },
   thumbnailContainer: {
     width: '100%',
     height: 250,
@@ -119,64 +155,108 @@ const styles = {
     shadowRadius: 10,
     elevation: -6,
   },
+  webView: {
+    flex: 1,
+  },
+  thumbnailOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // playIcon: {
+  //   position: 'absolute',
+  // },
   thumbnail: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
-    overlayColor: 'black',
-    overlayOpacity: 0.35,
   },
-  sectionTitle: {
-    paddingHorizontal: 8,
-    fontWeight: 'bold',
-    fontSize: 13,
-    color: 'grey',
+
+  //
+  contentContainer: {
+    padding: 16,
   },
-  courseTitle: {
-    paddingHorizontal: 8,
-    fontWeight: 'bold',
-    fontSize: 20,
-    color: '#11676D',
+  title: {
+    fontSize: 29,
+    marginBottom: 8,
+    color: '#333333',
   },
-  amount: {
-    paddingHorizontal: 8,
+  description: {
     fontSize: 16,
-    color: '#208E62',
+    marginBottom: 16,
+    color: '#666666',
   },
-  courseDescription: {
-    paddingHorizontal: 8,
-    fontSize: 13,
-    color: 'grey',
-  },
-  lessonContainer: {
+  creatorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#104B4D',
-    borderRadius: 20,
-    marginVertical: 2,
-    marginHorizontal: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    marginBottom: 16,
   },
-  playIconContainer: {
-    backgroundColor: 'white',
-    borderRadius: 50,
-    marginRight: 8,
-    padding: 5,
+  creatorText: {
+    fontSize: 16,
+    marginRight: 4,
+  },
+  creatorName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textTransform: 'capitalize',
+    marginRight: 4,
+    color: '#0a2766',
+  },
+  creatorImage: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
+  priceText: {
+    fontSize: 30,
+    marginBottom: 16,
+    color: '#333333',
+    fontWeight:"bold"
+  },
+  lessonsHeading: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    color: '#333333',
+  },
+  lessonItem: {
+    marginBottom: 8,
+  },
+  lessonItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 20,
+    backgroundColor: '#eff4ff',
   },
   playIcon: {
-    fontSize: 18,
-    color: 'black',
+    marginRight: 8,
+    color: '#1e489c',
+  },
+  playIconThumbnail: {
+    marginRight: 8,
+    color: '#fff',
+    position: 'absolute',
   },
   lessonTitle: {
-    fontWeight: 'bold',
     fontSize: 16,
-    color: 'white',
+    fontWeight: 'bold',
+    color: '#1e489c',
   },
-  loadingText: {
-    paddingHorizontal: 8,
-    fontSize: 13,
-    color: 'grey',
+  enrollButtonContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  enrollButton: {
+    backgroundColor: '#6F00FF',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+  },
+  enrollButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 };
 

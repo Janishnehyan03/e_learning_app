@@ -1,60 +1,123 @@
 import React, {useState, useEffect} from 'react';
-import {View, Text, Image, TouchableOpacity} from 'react-native';
+import {View, Text, Image, TouchableOpacity, StyleSheet} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {VIOLET_COLOR} from '../utils/Consts';
 
-const CourseCard = ({title, price, learners, slug, thumbnail, description}) => {
-  const [userId, setUserId] = useState('');
+const CourseCard = ({
+  title,
+  videos,
+  slug,
+  thumbnail,
+  description,
+  creator,
+  price,
+}) => {
   const navigation = useNavigation();
 
-  useEffect(() => {
-    getUserIdFromAsyncStorage();
-  }, []);
-
-  const getUserIdFromAsyncStorage = async () => {
-    try {
-      const userId = await AsyncStorage.getItem('userId');
-      if (userId) {
-        setUserId(userId);
-      }
-    } catch (error) {
-      console.log('Error getting user ID:', error);
-    }
-  };
-
   return (
-    <View style={{margin: 12, backgroundColor: '#E1E1E1', borderRadius: 20}}>
-      <View
-        style={{margin: 5, height: 180, borderRadius: 15, overflow: 'hidden'}}>
+    <TouchableOpacity
+      onPress={() => {
+        navigation.navigate('Details', {slug, thumbnail});
+      }}
+      style={styles.container}>
+      <View style={styles.imageContainer}>
         <Image
           source={{uri: thumbnail}}
-          style={{flex: 1, backgroundColor: 'black'}}
+          style={styles.thumbnail}
           resizeMode="cover"
         />
       </View>
-      <View style={{padding: 8}}>
-        <Text style={{fontWeight: '700', fontSize: 20, color: '#0D4759'}}>
-          {title}
+      <View style={styles.content}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.description}>{description}</Text>
+        <Text style={styles.videoCount}>({videos.length}) Lessons</Text>
+        <Text style={styles.createdBy}>
+          created by{' '}
+          <Text style={{fontWeight: 'bold', color: VIOLET_COLOR}}>
+            {creator}
+          </Text>
         </Text>
-        <Text style={{color: '#6E6D6D'}}>{description}</Text>
+        <Text style={styles.videoCount}>₹{price}.00</Text>
       </View>
-      <View style={{width: '100%', padding: 5}}>
+      {/* <View style={styles.buttonContainer}>
         <TouchableOpacity
           onPress={() => {
-            navigation.navigate('Details', {slug, thumbnail});
+            handlePress();
           }}
-          style={{
-            backgroundColor: learners.includes(userId) ? '#5124C0' : '#05393E',
-            borderRadius: 20,
-            paddingVertical: 10,
-          }}>
-          <Text style={{color: 'white', textAlign: 'center'}}>
-            {learners.includes(userId) ? 'Learn Now' : `Buy Now ₹ ${price}`}
+          style={[
+            styles.button,
+            {
+              backgroundColor: learners.includes(userId)
+                ? '#5124C0'
+                : '#05393E',
+            },
+          ]}>
+          <Text style={styles.buttonText}>
+            {learners.includes(userId) ? 'Learn Now' : `Know More`}
           </Text>
         </TouchableOpacity>
-      </View>
-    </View>
+      </View> */}
+    </TouchableOpacity>
   );
 };
+const styles = StyleSheet.create({
+  container: {
+    margin: 12,
+    backgroundColor: '#fff',
+    // borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  imageContainer: {
+    margin: 5,
+    height: 180,
+    // borderTopLeftRadius: 15,
+    // borderTopRightRadius: 15,
+    overflow: 'hidden',
+  },
+  thumbnail: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+  content: {
+    padding: 8,
+  },
+  title: {
+    fontWeight: '700',
+    fontSize: 20,
+    color: VIOLET_COLOR,
+  },
+  description: {
+    color: '#6E6D6D',
+  },
+  videoCount: {
+    color: '#333',
+    fontWeight: '600',
+    marginVertical: 5,
+  },
+  createdBy: {
+    color: '#333',
+    marginVertical: 5,
+  },
+  buttonContainer: {
+    width: '100%',
+    padding: 5,
+  },
+  button: {
+    borderRadius: 10,
+    paddingVertical: 10,
+  },
+  buttonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+});
 
 export default CourseCard;

@@ -1,18 +1,37 @@
-import React, { useState } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
-    ActivityIndicator,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Alert
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import Axios from '../utils/Axios';
 
 export default function OtpScreen({route, navigation}) {
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const {email} = route.params;
+  const [remainingTime, setRemainingTime] = useState(10 * 60); // 10 minutes in seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setRemainingTime(prevTime => prevTime - 1);
+    }, 1000);
 
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+
+  const minutes = Math.floor(remainingTime / 60);
+  const seconds = remainingTime % 60;
+
+  const formatTime = time => {
+    return time < 10 ? `0${time}` : time;
+  };
   const handleOtp = async () => {
     setIsLoading(true);
 
@@ -23,28 +42,30 @@ export default function OtpScreen({route, navigation}) {
       });
 
       if (response.status === 200) {
-        console.log(response.data);
         const authToken = response.data.token;
-        const username = response.data.name;
-        const userId = response.data.id;
+        const username = response.data.user.name;
+        const userId = response.data.user.id;
+        const email = response.data.user.email;
 
         // Save data to shared preferences or AsyncStorage
         // Example using AsyncStorage:
-        // await AsyncStorage.setItem('authToken', authToken);
-        // await AsyncStorage.setItem('username', username);
-        // await AsyncStorage.setItem('userId', userId);
+        await AsyncStorage.setItem('authToken', authToken);
+        await AsyncStorage.setItem('username', username);
+        await AsyncStorage.setItem('userId', userId);
+        await AsyncStorage.setItem('email', email);
 
         setIsLoading(false);
-        navigation.navigate('HomeScreen');
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'Home'}],
+        });
       } else {
         setIsLoading(false);
-        const error = response.data.message;
-        console.log(error);
-        throw error;
       }
     } catch (error) {
       setIsLoading(false);
-      throw error;
+      Alert.alert('Try Again', "Something Went Wrong", [{ text: 'OK' }]);
+      console.log(error.response);
     }
   };
 
@@ -85,8 +106,16 @@ export default function OtpScreen({route, navigation}) {
           )}
         </TouchableOpacity>
       </View>
+      <Text style={{textAlign: 'center', marginVertical: 5}}>
+        OTP will expire in {formatTime(minutes)}:{formatTime(seconds)} minutes
+      </Text>
+      {remainingTime <= 0 && (
+        <TouchableOpacity onPress={() => console.log('Resend OTP')}>
+          <Text>Resend OTP</Text>
+        </TouchableOpacity>
+      )}
       <View style={{marginTop: 40, alignItems: 'center'}}>
-        <Text>We have sent an email to your email</Text>
+        <Text>We have sent an OTP to your email</Text>
         <Text style={{color: 'lightblue'}}>{email}</Text>
       </View>
     </View>

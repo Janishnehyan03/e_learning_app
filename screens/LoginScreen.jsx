@@ -1,5 +1,5 @@
-import React, {useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -11,17 +11,18 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
+  Alert
 } from 'react-native';
 import Logo from '../assets/images/logo.png';
-
 import Axios from '../utils/Axios';
+import { useAuth } from '../utils/UserContext';
 
-const LoginScreen = ({navigation}) => {
+const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { setUser } = useAuth()
 
   const handleLogin = async () => {
     if (email.trim() === '' || password.trim() === '') {
@@ -38,22 +39,38 @@ const LoginScreen = ({navigation}) => {
           setEmail('');
           setPassword('');
           setError('');
-          Alert.alert('Authentication Success', 'Login Completed', [
-            {text: 'OK'},
-          ]);
+
           const token = response.data.token;
           const username = response.data.user.name;
           const userId = response.data.user.id;
+          const email = response.data.user.email;
+          setUser(response.data);
 
           await AsyncStorage.setItem('authToken', token);
           await AsyncStorage.setItem('username', username);
+          await AsyncStorage.setItem('email', email);
           await AsyncStorage.setItem('userId', userId);
           await AsyncStorage.setItem('userExists', 'true');
-          navigation.navigate('Home');
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Home' }],
+          });
         }
       } catch (error) {
+        console.log(error);
         setIsLoading(false);
-        setError(error.response.data.message);
+        if (error.response) {
+          const errorMessage = error.response.data.message;
+          Alert.alert('Authentication Failed', errorMessage, [{ text: 'OK' }]);
+        } else if (error.request) {
+          Alert.alert('Authentication Failed', 'No response from server', [
+            { text: 'OK' },
+          ]);
+        } else {
+          Alert.alert('Authentication Failed', 'Error during login', [
+            { text: 'OK' },
+          ]);
+        }
       }
     }
   };
@@ -67,7 +84,7 @@ const LoginScreen = ({navigation}) => {
         <View style={styles.innerContainer}>
           <Image
             source={Logo}
-            style={{width: 100, height: 60}}
+            style={{ width: 100, height: 60 }}
             resizeMode="contain"
           />
           <Text style={styles.title}>Login to your account</Text>
@@ -79,6 +96,7 @@ const LoginScreen = ({navigation}) => {
               placeholder="Email"
               value={email}
               onChangeText={setEmail}
+              placeholderTextColor={'#333'}
             />
           </View>
 
@@ -89,6 +107,7 @@ const LoginScreen = ({navigation}) => {
               secureTextEntry
               value={password}
               onChangeText={setPassword}
+              placeholderTextColor={'#333'}
             />
           </View>
 
@@ -102,7 +121,7 @@ const LoginScreen = ({navigation}) => {
           </TouchableOpacity>
 
           <View style={styles.registerContainer}>
-            <Text>Don't have an account? </Text>
+            <Text style={{color:"#333"}}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Register')}>
               <Text style={styles.registerText}>Register Now</Text>
             </TouchableOpacity>
@@ -124,16 +143,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  logo: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
   title: {
     fontSize: 17,
-    // fontWeight: 'bold',
     marginBottom: 40,
     textTransform: 'uppercase',
+    color:"#333"
   },
   error: {
     color: '#b12828',
@@ -149,6 +163,7 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 40,
+    color:"#333"
   },
   button: {
     backgroundColor: '#4B26A0',

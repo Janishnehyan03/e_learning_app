@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const Axios = axios.create({
-baseURL: "https://dhcourse.vercel.app/api/v1",
+baseURL: "https://course.cpetdhiu.in/api/v1",
 // baseURL: "http://localhost:5000/api/v1",
   headers: {
     "Content-Type": "application/json",

@@ -1,11 +1,35 @@
-import {View, Text, TouchableOpacity, Image} from 'react-native';
-import React from 'react';
+import React, {useContext, useEffect} from 'react';
+import {Image, TouchableOpacity} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {UserAuthContext} from '../utils/UserContext';
+import LoginIcon from '../assets/images/login.png';
+import UserIcon from '../assets/images/user.png';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const HeaderBtn = ({iconUrl, dimension, handlePress}) => {
+const HeaderBtn = () => {
+  const {loggedIn, setLoggedIn} = useContext(UserAuthContext);
+
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    async function getUser() {
+      if (await AsyncStorage.getItem('userExists')) {
+        setLoggedIn(true);
+      }
+    }
+    getUser()
+  }, []);
   return (
-    <TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => {
+        if (loggedIn) {
+          navigation.navigate('Profile');
+        } else {
+          navigation.navigate('Login');
+        }
+      }}>
       <Image
-        source={iconUrl}
+        source={loggedIn ? UserIcon : LoginIcon}
         resizeMode="cover"
         style={{
           width: 30,
