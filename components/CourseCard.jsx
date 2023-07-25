@@ -1,71 +1,80 @@
-import React, {useState, useEffect} from 'react';
-import {View, Text, Image, TouchableOpacity, StyleSheet} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, {useState} from 'react';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {VIOLET_COLOR} from '../utils/Consts';
 
-const CourseCard = ({
-  title,
-  videos,
-  slug,
-  thumbnail,
-  description,
-  creator,
-  price,
-}) => {
+const CourseCard = ({course}) => {
   const navigation = useNavigation();
+
+  const renderCreators = () => {
+    const creatorsCount = course.creators?.length;
+    if (!creatorsCount) return null;
+
+    if (creatorsCount === 1) {
+      return <Text style={styles.creator}>{course.creators[0].name}</Text>;
+    }
+
+    let creatorsText = '';
+    for (let i = 0; i < creatorsCount; i++) {
+      if (i === creatorsCount - 1) {
+        // Last creator
+        creatorsText += 'and ' + course.creators[i].name;
+      } else {
+        creatorsText += course.creators[i].name + ', ';
+      }
+    }
+
+    return <Text style={styles.creator}>{creatorsText}</Text>;
+  };
 
   return (
     <TouchableOpacity
       onPress={() => {
-        navigation.navigate('Details', {slug, thumbnail});
+        navigation.navigate('Details', {slug: course.slug});
       }}
       style={styles.container}>
       <View style={styles.imageContainer}>
         <Image
-          source={{uri: thumbnail}}
+          source={{uri: course.thumbnail}}
           style={styles.thumbnail}
           resizeMode="cover"
         />
       </View>
       <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.description}>{description}</Text>
-        <Text style={styles.videoCount}>({videos.length}) Lessons</Text>
-        <Text style={styles.createdBy}>
-          created by{' '}
-          <Text style={{fontWeight: 'bold', color: VIOLET_COLOR}}>
-            {creator}
-          </Text>
-        </Text>
-        <Text style={styles.videoCount}>₹{price}.00</Text>
+        <View style={styles.categoryContainer}>
+          <Text style={styles.categoryText}>#{course.category?.name}</Text>
+        </View>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>{course.title}</Text>
+        </View>
+        <View style={styles.descriptionContainer}>
+          <Text style={[styles.description]}>{course.description}</Text>
+          {/* {!expanded && (
+            <TouchableOpacity
+              style={styles.readMoreButton}
+              onPress={() => setExpanded(true)}
+            >
+              <Text style={styles.readMoreButtonText}>Read More</Text>
+            </TouchableOpacity>
+          )} */}
+        </View>
+        <View style={styles.creatorsContainer}>
+          <Text style={styles.creatorsLabel}>Created by: </Text>
+          <View style={styles.creators}>{renderCreators()}</View>
+        </View>
+        <View style={styles.priceContainer}>
+          <Text style={styles.price}>₹{course.price}</Text>
+        </View>
       </View>
-      {/* <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          onPress={() => {
-            handlePress();
-          }}
-          style={[
-            styles.button,
-            {
-              backgroundColor: learners.includes(userId)
-                ? '#5124C0'
-                : '#05393E',
-            },
-          ]}>
-          <Text style={styles.buttonText}>
-            {learners.includes(userId) ? 'Learn Now' : `Know More`}
-          </Text>
-        </TouchableOpacity>
-      </View> */}
     </TouchableOpacity>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
-    margin: 12,
+    margin: 8,
     backgroundColor: '#fff',
-    // borderRadius: 20,
+    borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -76,47 +85,89 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   imageContainer: {
-    margin: 5,
-    height: 180,
-    // borderTopLeftRadius: 15,
-    // borderTopRightRadius: 15,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
     overflow: 'hidden',
   },
   thumbnail: {
-    flex: 1,
+    width: '100%',
+    height: 180,
     backgroundColor: 'black',
   },
   content: {
     padding: 8,
   },
+  categoryContainer: {
+    backgroundColor: '#ccc',
+    borderRadius: 999,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000',
+  },
+  titleContainer: {},
   title: {
-    fontWeight: '700',
     fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 8,
     color: VIOLET_COLOR,
   },
+  descriptionContainer: {},
   description: {
-    color: '#6E6D6D',
-  },
-  videoCount: {
     color: '#333',
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  lineClampFour: {
+    // Line clamp to show only 4 lines of text
+    lineHeight: 24,
+    maxHeight: 96, // (24 * 4)
+    overflow: 'hidden',
+  },
+  readMoreButton: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
+    backgroundColor: VIOLET_COLOR,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  readMoreButtonText: {
+    fontSize: 16,
     fontWeight: '600',
-    marginVertical: 5,
-  },
-  createdBy: {
-    color: '#333',
-    marginVertical: 5,
-  },
-  buttonContainer: {
-    width: '100%',
-    padding: 5,
-  },
-  button: {
-    borderRadius: 10,
-    paddingVertical: 10,
-  },
-  buttonText: {
     color: 'white',
-    textAlign: 'center',
+  },
+  creatorsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  creatorsLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  creators: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  creator: {
+    fontSize: 16,
+    color: VIOLET_COLOR,
+    marginRight: 8,
+  },
+  priceContainer: {
+    alignItems: 'flex-end',
+  },
+  price: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
   },
 });
 

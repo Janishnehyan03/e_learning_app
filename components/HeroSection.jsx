@@ -3,32 +3,34 @@ import {View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
 import {VIOLET_COLOR} from '../utils/Consts';
 import {useNavigation} from '@react-navigation/native';
 
-function HeroSection() {
+function HeroSection({user}) {
   const navigation = useNavigation();
   return (
     <View style={styles.container}>
-      <Image
+      {/* <Image
         source={{
           uri: 'https://cdn.devdojo.com/images/september2020/macbook-mockup.png',
         }} // Replace with the actual image path
         style={styles.image}
         resizeMode="cover"
-      />
+      /> */}
       <View style={styles.content}>
         <Text style={styles.title}>Learn the Next Great Thing</Text>
         <Text style={styles.description}>
           Are you prepared to embark on an exciting journey and begin your
           learning experience with CPET to advance your career?
         </Text>
-        <View style={styles.centeredButtonContainer}>
-          <TouchableOpacity
-            style={styles.signupButton}
-            onPress={() => {
-              navigation.navigate('Register');
-            }}>
-            <Text style={styles.signupButtonText}>Signup Today!</Text>
-          </TouchableOpacity>
-        </View>
+        {!user && (
+          <View style={styles.centeredButtonContainer}>
+            <TouchableOpacity
+              style={styles.signupButton}
+              onPress={() => {
+                navigation.navigate('Register');
+              }}>
+              <Text style={styles.signupButtonText}>Signup Today!</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </View>
   );

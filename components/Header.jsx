@@ -93,8 +93,12 @@ function Header() {
           style={styles.navLink}>
           <Text style={styles.navText}>Dashboard</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navLink}>
-          <Text style={styles.navText}>Contact</Text>
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate('AboutScreen');
+          }}
+          style={styles.navLink}>
+          <Text style={styles.navText}>About</Text>
         </TouchableOpacity>
 
         {/* Mobile-only links */}

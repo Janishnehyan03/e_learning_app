@@ -1,101 +1,146 @@
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { VIOLET_COLOR } from '../utils/Consts';
-import LinearGradient from 'react-native-linear-gradient';
-const Features = () => {
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  Linking,
+  TouchableOpacity,
+} from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {VIOLET_COLOR} from '../utils/Consts';
+
+const FeaturesScreen = () => {
+  const features = [
+    {
+      title: 'Wide Range of Courses',
+      description: `Explore a vast collection of courses covering various subjects and skills. Our platform offers a diverse range of topics, including technology, business, arts, and more. Whether you're a beginner or an advanced learner, you'll find the right courses to meet your learning goals.`,
+      icon: <Ionicons name="book-outline" size={48} color={'white'} />,
+    },
+    {
+      title: 'Learn Anytime, Anywhere',
+      description: `Access your courses from anywhere and learn at your own pace. With our mobile app and responsive website, you can continue your learning journey on the go. No matter where you are, you can dive into your favorite courses and make the most of your time.`,
+      icon: <Ionicons name="globe-outline" size={48} color={'white'} />,
+    },
+    {
+      title: 'Expert Instructors',
+      description: `Learn from industry experts and experienced educators. Our courses are designed and taught by professionals who have extensive knowledge and practical experience in their fields. You'll benefit from their insights and gain valuable skills for your career.`,
+      icon: <Ionicons name="people-outline" size={48} color={'white'} />,
+    },
+    {
+      title: 'Interactive Learning',
+      description: `Engage in interactive lessons, quizzes, and practical exercises. We believe that active participation enhances the learning experience. Our courses are designed to keep you engaged through hands-on activities, discussions, and assessments.`,
+      icon: (
+        <Ionicons
+          name="chatbubble-ellipses-outline"
+          size={48}
+          color={'white'}
+        />
+      ),
+    },
+    {
+      title: 'Certifications',
+      description: `Earn certificates upon course completion to showcase your skills. When you successfully complete a course, you'll receive a verified certificate that can be shared with employers and on your professional profiles. Our certifications are a testament to your knowledge and dedication.`,
+      icon: <Ionicons name="medal-outline" size={48} color={'white'} />,
+    },
+    // Add more features here...
+  ];
+  const ExternalLink = ({url, children}) => {
+    const handleLinkPress = () => {
+      Linking.openURL(url).catch(err =>
+        console.error('Error opening URL: ', err),
+      );
+    };
+
+    return (
+      <TouchableOpacity onPress={handleLinkPress}>
+        <Text style={styles.developedByText}>{children}</Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Our Features</Text>
-      <Text style={styles.subHeading}>Built and Designed with you in Mind</Text>
-
-      <View style={styles.feature}>
-        <View style={styles.icon}>
-          <Ionicons name="videocam" size={50} color="white" />
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text
+        style={{
+          fontWeight: 'bold',
+          color: VIOLET_COLOR,
+          textAlign: 'center',
+          textTransform: 'uppercase',
+          marginBottom: 20,
+        }}>
+        Our Features
+      </Text>
+      {features.map((feature, index) => (
+        <View key={index} style={styles.featureItem}>
+          <View style={styles.iconContainer}>{feature.icon}</View>
+          <Text style={styles.title}>{feature.title}</Text>
+          <Text style={styles.description}>{feature.description}</Text>
         </View>
-        <Text style={styles.featureText}>Video Classes</Text>
-        <Text style={styles.featureDescription}>
-          Simplify learning with video classes for effortless knowledge acquisition.
+      ))}
+      <View style={styles.footer}>
+        <ExternalLink url="https://digitiostack.co.in">
+          Developed by <Text style={{fontWeight: 'bold'}}>DIGITIO STACK</Text>
+        </ExternalLink>
+        <Text style={styles.copyrightText}>
+          © 2023 Digitio Stack. All rights reserved.
         </Text>
-        <Text style={styles.learnMore}>Learn More</Text>
       </View>
-
-      <View style={styles.feature}>
-        <View style={styles.icon}>
-          <Ionicons name="construct" size={50} color="white" />
-        </View>
-        <Text style={styles.featureText}>Practical Sessions</Text>
-        <Text style={styles.featureDescription}>
-          Apply video class knowledge through hands-on practical sessions.
-        </Text>
-        <Text style={styles.learnMore}>Learn More</Text>
-      </View>
-
-      <View style={styles.feature}>
-        <View style={styles.icon}>
-          <Ionicons name="notifications" size={50} color="#fff" />
-        </View>
-        <Text style={styles.featureText}>Smart Notifications</Text>
-        <Text style={styles.featureDescription}>
-          Stay informed with intelligent, timely notifications for reminders.
-        </Text>
-        <Text style={styles.learnMore}>Learn More</Text>
-      </View>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center',
+    padding: 16,
+  },
+  featureItem: {
+    flexDirection: 'column',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    marginBottom: 24,
   },
-  heading: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    color: '#3b82f6',
-    marginBottom: 10,
-  },
-  subHeading: {
-    fontSize: 18,
-    textAlign: 'center',
-    color: '#333',
-    marginBottom: 20,
-  },
-  icon: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: VIOLET_COLOR,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  feature: {
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  featureText: {
-    fontSize: 18,
+  title: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
-  },
-  featureDescription: {
-    fontSize: 14,
+    marginTop: 16,
     textAlign: 'center',
-    color: '#666',
-    marginHorizontal: 20,
+    color: VIOLET_COLOR,
   },
-  learnMore: {
+  description: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginTop: 8,
+    color: '#777', // You can use any color of your choice
+    lineHeight: 22, // Adjust the line height for better readability
+    paddingHorizontal: 16, //
+  },
+  footer: {
+    alignItems: 'center',
+    marginTop: 32,
+  },
+  developedByText: {
     fontSize: 14,
-    color: '#3b82f6',
-    textDecorationLine: 'underline',
-    marginTop: 10,
+    color: '#777',
+  },
+  copyrightText: {
+    fontSize: 12,
+    color: '#777',
+    marginTop: 4,
   },
 });
 
-export default Features;
+export default FeaturesScreen;

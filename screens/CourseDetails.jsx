@@ -5,12 +5,14 @@ import {Image, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import Axios from '../utils/Axios';
+import {VIOLET_COLOR} from '../utils/Consts';
+import RazorpayCheckout from 'react-native-razorpay';
 
 const CourseDetailsPage = ({route}) => {
-  const {slug, thumbnail} = route.params;
   const [courseData, setCourseData] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const navigation = useNavigation();
+  const {slug} = route.params;
 
   const onYoutubeStateChange = event => {
     if (event === 'ended') {
@@ -20,12 +22,7 @@ const CourseDetailsPage = ({route}) => {
   async function handleButton() {
     const userExist = await AsyncStorage.getItem('username');
     if (userExist) {
-      navigation.navigate('Payment', {
-        courseId: courseData._id,
-        thumbnail: courseData?.thumbnail,
-        title: courseData.title,
-        price: courseData.price,
-      });
+      openCheckout();
     } else {
       navigation.navigate('Login');
     }
@@ -51,6 +48,62 @@ const CourseDetailsPage = ({route}) => {
       return '';
     }
   };
+
+  const openCheckout = async () => {
+    const response = await Axios.post(`/booking/${courseData?._id}`);
+
+    const responseData = response.data;
+    const paymentId = responseData.order.id;
+
+    const options = {
+      key: 'rzp_test_PXZvFNXpJFylGx',
+      amount: courseData?.price * 100,
+      name: 'CPET Darul Huda',
+      order_id: paymentId,
+      description: 'Payment',
+      notes: {orderId: paymentId},
+      prefill: {contact: '9746229547', email: 'cpetdarulhuda@gmail.com'},
+      external: {
+        wallets: ['paytm'],
+      },
+
+      theme: {color: '#53a20e'},
+    };
+
+    try {
+      RazorpayCheckout.open(options)
+        .then(data => {
+          handlePaymentSuccess(data);
+        })
+        .catch(error => {
+          // handle failure
+          // alert(`Error: ${error.code} | ${error.description}`);
+          Alert.alert('Payment Failed', 'Error occured in your payment', [
+            {text: 'OK'},
+          ]);
+        });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handlePaymentSuccess = async data => {
+    const response = await Axios.post('/booking/success/booking', {
+      course: courseData._id,
+      razorpay_payment_id: data.razorpay_payment_id,
+      razorpay_order_id: data.razorpay_order_id,
+      razorpay_signature: data.razorpay_signature,
+      price: courseData.price,
+    });
+
+    if (response.status === 200) {
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'Home'}],
+      });
+    }
+  };
+
   useEffect(() => {
     fetchCourseData();
   }, [slug]);
@@ -89,8 +142,55 @@ const CourseDetailsPage = ({route}) => {
           <Text style={styles.title}>{courseData?.title}</Text>
           <Text style={styles.description}>{courseData?.description}</Text>
           <View style={styles.creatorContainer}>
-            <Text style={styles.creatorText}>Created by</Text>
-            <Text style={styles.creatorName}>{courseData?.creator?.name}</Text>
+            <View style={styles.createdBy}>
+              <Text>created by</Text>
+              <Text>
+                {/* Map through the creators array */}
+                {courseData?.creators?.length > 0 &&
+                  courseData?.creators.map((creator, index) => {
+                    // Add comma if it's not the last creator
+                    if (index !== courseData?.creators.length - 1) {
+                      return (
+                        <TouchableOpacity
+                          key={creator.slug}
+                          onPress={() =>
+                            navigation.navigate('CreatorScreen', {
+                              slug: creator.slug,
+                            })
+                          }>
+                          <Text
+                            style={{
+                              fontWeight: 'bold',
+                              color: VIOLET_COLOR,
+                              marginRight: 4,
+                            }}>
+                            {creator.name + ','}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    }
+                    // Add 'and' before the last creator
+                    return (
+                      <TouchableOpacity
+                        key={creator.slug}
+                        onPress={() =>
+                          navigation.navigate('CreatorScreen', {
+                            slug: creator.slug,
+                          })
+                        }>
+                        <Text
+                          style={{
+                            fontWeight: 'bold',
+                            color: VIOLET_COLOR,
+                            marginLeft: 4,
+                          }}>
+                          {'and ' + creator.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+              </Text>
+            </View>
             {courseData?.creator && (
               <Image
                 source={{uri: courseData?.creator?.image}}
@@ -113,19 +213,14 @@ const CourseDetailsPage = ({route}) => {
               </View>
             </TouchableOpacity>
           ))}
-          <View style={styles.enrollButtonContainer}>
-            <TouchableOpacity style={styles.enrollButton}>
-              <Text style={styles.enrollButtonText}>Enroll Now</Text>
-            </TouchableOpacity>
-          </View>
         </ScrollView>
       </ScrollView>
-      <View style={styles.buyButtonContainer}>
-        <TouchableOpacity title="BUY NOW" onPress={() => handleButton()}>
-          <Text
-            style={{textAlign: 'center', color: 'white', fontWeight: 'bold'}}>
-            Buy now
-          </Text>
+      <View style={styles.enrollButtonContainer}>
+        <TouchableOpacity
+          style={styles.enrollButton}
+          title="Enroll Now"
+          onPress={() => handleButton()}>
+          <Text style={styles.enrollButtonText}>Enroll Now</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -211,7 +306,7 @@ const styles = {
     fontSize: 30,
     marginBottom: 16,
     color: '#333333',
-    fontWeight:"bold"
+    fontWeight: 'bold',
   },
   lessonsHeading: {
     fontSize: 20,
@@ -245,7 +340,8 @@ const styles = {
   },
   enrollButtonContainer: {
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 6,
+    marginBottom: 4,
   },
   enrollButton: {
     backgroundColor: '#6F00FF',
