@@ -7,11 +7,14 @@ import YoutubePlayer from 'react-native-youtube-iframe';
 import Axios from '../utils/Axios';
 import {VIOLET_COLOR} from '../utils/Consts';
 import RazorpayCheckout from 'react-native-razorpay';
+import ShareButton from '../components/ShareButton';
 
 const CourseDetailsPage = ({route}) => {
   const [courseData, setCourseData] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(false);
   const {slug} = route.params;
 
   const onYoutubeStateChange = event => {
@@ -30,10 +33,13 @@ const CourseDetailsPage = ({route}) => {
 
   const fetchCourseData = async () => {
     try {
+      setFetching(true);
       const {data} = await Axios.get(`/course/${slug}`);
       setCourseData(data);
+      setFetching(false);
       setIsPlaying(false);
     } catch (error) {
+      setFetching(false);
       console.error('Error loading course data', error);
     }
   };
@@ -50,57 +56,55 @@ const CourseDetailsPage = ({route}) => {
   };
 
   const openCheckout = async () => {
-    const response = await Axios.post(`/booking/${courseData?._id}`);
-
-    const responseData = response.data;
-    const paymentId = responseData.order.id;
-
-    const options = {
-      key: 'rzp_test_PXZvFNXpJFylGx',
-      amount: courseData?.price * 100,
-      name: 'CPET Darul Huda',
-      order_id: paymentId,
-      description: 'Payment',
-      notes: {orderId: paymentId},
-      prefill: {contact: '9746229547', email: 'cpetdarulhuda@gmail.com'},
-      external: {
-        wallets: ['paytm'],
-      },
-
-      theme: {color: '#53a20e'},
-    };
-
     try {
-      RazorpayCheckout.open(options)
-        .then(data => {
-          handlePaymentSuccess(data);
-        })
-        .catch(error => {
-          // handle failure
-          // alert(`Error: ${error.code} | ${error.description}`);
-          Alert.alert('Payment Failed', 'Error occured in your payment', [
-            {text: 'OK'},
-          ]);
-        });
+      setLoading(true);
+      const response = await Axios.post(`/booking/${courseData?._id}`);
+      const responseData = response.data;
+      const paymentId = responseData.order.id;
+
+      const options = {
+        key: 'rzp_test_PXZvFNXpJFylGx',
+        amount: courseData?.price * 100,
+        name: 'CPET Darul Huda',
+        order_id: paymentId,
+        description: 'Payment',
+        notes: {orderId: paymentId},
+        prefill: {contact: '9746229547', email: 'cpetdarulhuda@gmail.com'},
+        external: {
+          wallets: ['paytm'],
+        },
+        theme: {color: '#53a20e'},
+      };
+
+      const data = await RazorpayCheckout.open(options);
+      setLoading(false);
+      handlePaymentSuccess(data);
     } catch (error) {
-      console.log(error);
+      setLoading(false);
+      console.log(error.response.data);
     }
   };
 
   const handlePaymentSuccess = async data => {
-    const response = await Axios.post('/booking/success/booking', {
-      course: courseData._id,
-      razorpay_payment_id: data.razorpay_payment_id,
-      razorpay_order_id: data.razorpay_order_id,
-      razorpay_signature: data.razorpay_signature,
-      price: courseData.price,
-    });
-
-    if (response.status === 200) {
-      navigation.reset({
-        index: 0,
-        routes: [{name: 'Home'}],
+    try {
+      const response = await Axios.post('/booking/success/booking', {
+        course: courseData._id,
+        razorpay_payment_id: data.razorpay_payment_id,
+        razorpay_order_id: data.razorpay_order_id,
+        razorpay_signature: data.razorpay_signature,
+        price: courseData.price,
       });
+
+      if (response.status === 200) {
+        setLoading(false);
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'Home'}],
+        });
+      }
+    } catch (error) {
+      setLoading(false);
+      console.log(error.response);
     }
   };
 
@@ -123,7 +127,7 @@ const CourseDetailsPage = ({route}) => {
             <TouchableOpacity
               onPress={() => setIsPlaying(true)}
               style={styles.thumbnailOverlay}>
-              {courseData && (
+              {!fetching && courseData && (
                 <Image
                   source={{uri: courseData?.thumbnail}}
                   style={styles.thumbnail}
@@ -138,18 +142,44 @@ const CourseDetailsPage = ({route}) => {
             </TouchableOpacity>
           )}
         </View>
-        <ScrollView style={styles.contentContainer}>
-          <Text style={styles.title}>{courseData?.title}</Text>
-          <Text style={styles.description}>{courseData?.description}</Text>
-          <View style={styles.creatorContainer}>
-            <View style={styles.createdBy}>
-              <Text>created by</Text>
-              <Text>
-                {/* Map through the creators array */}
-                {courseData?.creators?.length > 0 &&
-                  courseData?.creators.map((creator, index) => {
-                    // Add comma if it's not the last creator
-                    if (index !== courseData?.creators.length - 1) {
+
+        {!fetching ? (
+          <ScrollView style={styles.contentContainer}>
+            <Text style={styles.title}>{courseData?.title}</Text>
+            <Text style={styles.description}>{courseData?.description}</Text>
+            <Text
+              style={{color: 'black', marginVertical: 7, fontWeight: 'bold'}}>
+              #{courseData?.category?.name}
+            </Text>
+            <View style={styles.creatorContainer}>
+              <View style={styles.createdBy}>
+                <Text style={{color: 'black'}}>created by</Text>
+                <Text>
+                  {/* Map through the creators array */}
+                  {courseData?.creators?.length > 0 &&
+                    courseData?.creators.map((creator, index) => {
+                      // Add comma if it's not the last creator
+                      if (index !== courseData?.creators.length - 1) {
+                        return (
+                          <TouchableOpacity
+                            key={creator.slug}
+                            onPress={() =>
+                              navigation.navigate('CreatorScreen', {
+                                slug: creator.slug,
+                              })
+                            }>
+                            <Text
+                              style={{
+                                fontWeight: 'bold',
+                                color: VIOLET_COLOR,
+                                marginRight: 4,
+                              }}>
+                              {creator.name + ','}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      }
+                      // Add 'and' before the last creator
                       return (
                         <TouchableOpacity
                           key={creator.slug}
@@ -162,66 +192,79 @@ const CourseDetailsPage = ({route}) => {
                             style={{
                               fontWeight: 'bold',
                               color: VIOLET_COLOR,
-                              marginRight: 4,
+                              marginLeft: 4,
                             }}>
-                            {creator.name + ','}
+                            {'and ' + creator.name}
                           </Text>
                         </TouchableOpacity>
                       );
-                    }
-                    // Add 'and' before the last creator
-                    return (
-                      <TouchableOpacity
-                        key={creator.slug}
-                        onPress={() =>
-                          navigation.navigate('CreatorScreen', {
-                            slug: creator.slug,
-                          })
-                        }>
-                        <Text
-                          style={{
-                            fontWeight: 'bold',
-                            color: VIOLET_COLOR,
-                            marginLeft: 4,
-                          }}>
-                          {'and ' + creator.name}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-              </Text>
-            </View>
-            {courseData?.creator && (
-              <Image
-                source={{uri: courseData?.creator?.image}}
-                style={styles.creatorImage}
-              />
-            )}
-          </View>
-          <Text style={styles.priceText}>₹{courseData?.price}</Text>
-          <Text style={styles.lessonsHeading}>Lessons</Text>
-          {courseData?.videos.map((lesson, index) => (
-            <TouchableOpacity key={index} style={styles.lessonItem}>
-              <View style={styles.lessonItemContent}>
-                <Ionicons
-                  name="play-circle-outline"
-                  size={48}
-                  color="white"
-                  style={styles.playIcon}
-                />
-                <Text style={styles.lessonTitle}>{lesson?.videoTitle}</Text>
+                    })}
+                </Text>
               </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+              {courseData?.creator && (
+                <Image
+                  source={{uri: courseData?.creator?.image}}
+                  style={styles.creatorImage}
+                />
+              )}
+            </View>
+            <View
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={styles.priceText}>₹{courseData?.price}</Text>
+              <View>
+                <ShareButton
+                  title={courseData?.title}
+                  url={`https://e-learn.cpetdhiu.in/course/${slug}`}
+                />
+                <Text style={{color: VIOLET_COLOR}}>Share </Text>
+              </View>
+            </View>
+            <Text style={styles.lessonsHeading}>Lessons</Text>
+            {courseData?.videos.map((lesson, index) => (
+              <TouchableOpacity key={index} style={styles.lessonItem}>
+                <View style={styles.lessonItemContent}>
+                  <Ionicons
+                    name="play-circle-outline"
+                    size={48}
+                    color="white"
+                    style={styles.playIcon}
+                  />
+                  <Text style={styles.lessonTitle}>{lesson?.videoTitle}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        ) : (
+          <View style={styles.skeletonContainer}>
+            <View style={styles.skeletonThumbnail} />
+            <View style={styles.skeletonTextContainer}>
+              <View style={styles.skeletonText} />
+              <View style={styles.skeletonText} />
+              <View style={styles.skeletonText} />
+            </View>
+            <View style={styles.skeletonLesson} />
+            <View style={styles.skeletonLesson} />
+            <View style={styles.skeletonLesson} />
+          </View>
+        )}
       </ScrollView>
       <View style={styles.enrollButtonContainer}>
-        <TouchableOpacity
-          style={styles.enrollButton}
-          title="Enroll Now"
-          onPress={() => handleButton()}>
-          <Text style={styles.enrollButtonText}>Enroll Now</Text>
-        </TouchableOpacity>
+        {loading ? (
+          <TouchableOpacity style={styles.enrollButton}>
+            <Text style={styles.enrollButtonText}>Processing...</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.enrollButton}
+            title="Enroll Now"
+            onPress={() => handleButton()}>
+            <Text style={styles.enrollButtonText}>Enroll Now</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -229,6 +272,7 @@ const CourseDetailsPage = ({route}) => {
 
 const styles = {
   container: {
+    backgroundColor: 'white',
     flex: 1,
   },
   buyButtonContainer: {
@@ -353,6 +397,34 @@ const styles = {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  skeletonContainer: {
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+  },
+  skeletonThumbnail: {
+    width: 80,
+    height: 70,
+    backgroundColor: '#d5d0d0',
+    borderRadius: 5,
+    marginBottom: 8,
+  },
+  skeletonTextContainer: {
+    marginBottom: 8,
+  },
+  skeletonText: {
+    width: '70%',
+    height: 12,
+    backgroundColor: '#d5d0d0',
+    marginBottom: 4,
+    borderRadius: 5,
+  },
+  skeletonLesson: {
+    width: '100%',
+    height: 60,
+    backgroundColor: '#d5d0d0',
+    marginBottom: 8,
+    borderRadius: 10,
   },
 };
 

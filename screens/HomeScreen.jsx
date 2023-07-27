@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -15,9 +15,11 @@ import HeroSection from '../components/HeroSection';
 import MyCourses from '../components/MyCourses';
 import Skeleton from '../components/Skelton';
 import Axios from '../utils/Axios';
-import {VIOLET_COLOR} from '../utils/Consts';
+import { VIOLET_COLOR } from '../utils/Consts';
 
 const HomeScreen = () => {
+  
+
   const [isLoading, setIsLoading] = useState(true);
   const [courses, setCourses] = useState([]);
   const [user, setUser] = useState(null);

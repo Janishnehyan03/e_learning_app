@@ -1,29 +1,27 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text, Image, TouchableOpacity, ScrollView,Dimensions} from 'react-native';
-import YoutubePlayer from 'react-native-youtube-iframe';
-import Axios from '../utils/Axios';
-import {DARK_GREEN, VIOLET_COLOR} from '../utils/Consts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
+import React, {useEffect, useState} from 'react';
+import {
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
+} from 'react-native';
+import YoutubePlayer from 'react-native-youtube-iframe';
+import ShareButton from '../components/ShareButton';
+import Axios from '../utils/Axios';
+import {DARK_GREEN, VIOLET_COLOR} from '../utils/Consts';
 
 const LearnScreen = ({route}) => {
   const {slug} = route.params;
   const [courseData, setCourseData] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const navigation = useNavigation();
-  const isPortrait = () => {
-    const dim = Dimensions.get('screen');
-    return dim.height >= dim.width;
-};
- 
-/**
- * Returns true of the screen is in landscape mode
- */
-const isLandscape = () => {
-    const dim = Dimensions.get('screen');
-    return dim.width >= dim.height;
-};
+
   // Function to play the next video
   const playNextVideo = () => {
     const nextVideoIndex = currentVideoIndex + 1;
@@ -60,8 +58,10 @@ const isLandscape = () => {
 
   const fetchCourseData = async () => {
     try {
+      setLoading(true);
       const {data} = await Axios.get(`/course/${slug}`);
       setCourseData(data);
+      setLoading(false);
       const lastVideoIndex = await AsyncStorage.getItem('lastVideoIndex');
       const lastCourse = await AsyncStorage.getItem('lastCourse');
       if (lastVideoIndex === null || lastCourse === null) {
@@ -80,19 +80,20 @@ const isLandscape = () => {
         }
       }
     } catch (error) {
+      setLoading(false);
       console.error('Error loading course data', error);
     }
   };
 
-  
   useEffect(() => {
     fetchCourseData();
   }, []);
 
   return (
-    <View style={{
-      flex:1
-    }}>
+    <View
+      style={{
+        flex: 1,
+      }}>
       <YoutubePlayer
         height={250}
         videoId={videoUrl}
@@ -106,7 +107,7 @@ const isLandscape = () => {
       />
       <View>
         <Text style={styles.sectionTitle}>About the course</Text>
-        {courseData ? (
+        {!loading && courseData ? (
           <View>
             <Text style={styles.courseTitle}>{courseData.title}</Text>
             <Text style={styles.courseDescription}>
@@ -160,7 +161,29 @@ const isLandscape = () => {
                   })}
               </Text>
             </View>
-
+            <View
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}>
+              <Text
+                style={{
+                  color: VIOLET_COLOR,
+                  marginLeft: 4,
+                  fontWeight: 'bold',
+                }}>
+                ₹{courseData?.price}
+              </Text>
+              <View>
+                <ShareButton
+                  title={courseData?.title}
+                  url={`https://e-learn.cpetdhiu.in/course/${slug}`}
+                />
+                <Text style={{color: VIOLET_COLOR}}>Share </Text>
+              </View>
+            </View>
             <Text style={styles.sectionTitle}>
               Lessons ({courseData.videos.length})
             </Text>
@@ -212,7 +235,17 @@ const isLandscape = () => {
             </ScrollView>
           </View>
         ) : (
-          <Text style={styles.loadingText}>Loading course data...</Text>
+          <View style={styles.skeletonContainer}>
+            <View style={styles.skeletonThumbnail} />
+            <View style={styles.skeletonTextContainer}>
+              <View style={styles.skeletonText} />
+              <View style={styles.skeletonText} />
+              <View style={styles.skeletonText} />
+            </View>
+            <View style={styles.skeletonLesson} />
+            <View style={styles.skeletonLesson} />
+            <View style={styles.skeletonLesson} />
+          </View>
         )}
       </View>
     </View>
@@ -304,6 +337,34 @@ const styles = {
     width: 80, // Adjust the width according to your needs
     height: 70, // Adjust the height according to your needs
     borderRadius: 5,
+  },
+  skeletonContainer: {
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+  },
+  skeletonThumbnail: {
+    width: 80,
+    height: 70,
+    backgroundColor: '#d5d0d0',
+    borderRadius: 5,
+    marginBottom: 8,
+  },
+  skeletonTextContainer: {
+    marginBottom: 8,
+  },
+  skeletonText: {
+    width: '70%',
+    height: 12,
+    backgroundColor: '#d5d0d0',
+    marginBottom: 4,
+    borderRadius: 5,
+  },
+  skeletonLesson: {
+    width: '100%',
+    height: 60,
+    backgroundColor: '#d5d0d0',
+    marginBottom: 8,
+    borderRadius: 10,
   },
 };
 

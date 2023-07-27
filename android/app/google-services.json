@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "981823922775",
+    "project_id": "cpet-e-learning",
+    "storage_bucket": "cpet-e-learning.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:981823922775:android:81782c5d152cf7a37db912",
+        "android_client_info": {
+          "package_name": "com.digitiostack.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "981823922775-gfds2sk8g2lh92f5f01e2k0qmma9foc7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvlanVUjw3V2qNEWZ5aTL2BntKw0obhfg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "981823922775-gfds2sk8g2lh92f5f01e2k0qmma9foc7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:981823922775:android:873f950c777378117db912",
+        "android_client_info": {
+          "package_name": "com.e_learning_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "981823922775-gfds2sk8g2lh92f5f01e2k0qmma9foc7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvlanVUjw3V2qNEWZ5aTL2BntKw0obhfg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "981823922775-gfds2sk8g2lh92f5f01e2k0qmma9foc7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
