@@ -63,12 +63,12 @@ const MyCourses = ({
 const styles = StyleSheet.create({
   container: {
     margin: 12,
-    backgroundColor: '#EEEDED', // New background color
+    // backgroundColor: '#EEEDED', // New background color
     borderRadius: 10, // Changed border radius
-    borderWidth: 1,
-    borderColor: '#C9E1D8', // Border color
+    // borderWidth: 1,
+    // borderColor: '#C9E1D8', // Border color
     overflow: 'hidden', // Ensure borderRadius is applied to the container
-    elevation: 3, // Box shadow for Android devices
+    // elevation: 3, // Box shadow for Android devices
   },
   imageContainer: {
     height: 180,

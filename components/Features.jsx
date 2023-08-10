@@ -11,6 +11,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {VIOLET_COLOR} from '../utils/Consts';
 
 const FeaturesScreen = () => {
+  const colors = ['#131b65', '#135665', '#651340', '#14917c', '#358ed2'];
   const features = [
     {
       title: 'Wide Range of Courses',
@@ -73,8 +74,13 @@ const FeaturesScreen = () => {
       </Text>
       {features.map((feature, index) => (
         <View key={index} style={styles.featureItem}>
-          <View style={styles.iconContainer}>{feature.icon}</View>
-          <Text style={styles.title}>{feature.title}</Text>
+          <View
+            style={[styles.iconContainer, {backgroundColor: colors[index]}]}>
+            {feature.icon}
+          </View>
+          <Text style={[styles.title, {color: colors[index]}]}>
+            {feature.title}
+          </Text>
           <Text style={styles.description}>{feature.description}</Text>
         </View>
       ))}
@@ -106,7 +112,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: VIOLET_COLOR,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
@@ -118,7 +123,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 16,
     textAlign: 'center',
-    color: VIOLET_COLOR,
   },
   description: {
     fontSize: 15,

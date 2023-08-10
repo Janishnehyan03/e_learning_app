@@ -41,15 +41,15 @@ const CourseCard = ({course}) => {
         />
       </View>
       <View style={styles.content}>
-        <View style={styles.categoryContainer}>
-          <Text style={styles.categoryText}>#{course.category?.name}</Text>
+        <Text style={styles.title}>{course.title}</Text>
+        <View style={styles.creatorsContainer}>
+          <Text style={styles.creatorsLabel}>Created by: </Text>
+          <View style={styles.creators}>{renderCreators()}</View>
         </View>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>{course.title}</Text>
-        </View>
-        <View style={styles.descriptionContainer}>
-          <Text style={[styles.description]}>{course.description}</Text>
-          {/* {!expanded && (
+        <Text style={styles.categoryText}>{course.category?.name}</Text>
+
+        <Text style={[styles.description]}>{course.description}</Text>
+        {/* {!expanded && (
             <TouchableOpacity
               style={styles.readMoreButton}
               onPress={() => setExpanded(true)}
@@ -57,14 +57,8 @@ const CourseCard = ({course}) => {
               <Text style={styles.readMoreButtonText}>Read More</Text>
             </TouchableOpacity>
           )} */}
-        </View>
-        <View style={styles.creatorsContainer}>
-          <Text style={styles.creatorsLabel}>Created by: </Text>
-          <View style={styles.creators}>{renderCreators()}</View>
-        </View>
-        <View style={styles.priceContainer}>
-          <Text style={styles.price}>₹{course.price}</Text>
-        </View>
+
+        <Text style={styles.price}>₹{course.price}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -73,16 +67,15 @@ const CourseCard = ({course}) => {
 const styles = StyleSheet.create({
   container: {
     margin: 8,
-    backgroundColor: '#fff',
     borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    // shadowColor: '#000',
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 2,
+    // },
+    // shadowOpacity: 0.25,
+    // shadowRadius: 3.84,
+    // elevation: 5,
   },
   imageContainer: {
     borderTopLeftRadius: 8,
@@ -97,30 +90,21 @@ const styles = StyleSheet.create({
   content: {
     padding: 8,
   },
-  categoryContainer: {
-    backgroundColor: '#ccc',
-    borderRadius: 999,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-  },
   categoryText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#000',
+    color: '#131b65',
+    marginVertical: 4,
   },
-  titleContainer: {},
   title: {
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 8,
     color: VIOLET_COLOR,
   },
-  descriptionContainer: {},
   description: {
     color: '#333',
-    fontSize: 16,
+    fontSize: 14,
     lineHeight: 24,
   },
   lineClampFour: {
@@ -155,19 +139,20 @@ const styles = StyleSheet.create({
   creators: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    alignItems: 'center',
   },
   creator: {
-    fontSize: 16,
+    fontSize: 14,
     color: VIOLET_COLOR,
     marginRight: 8,
+    fontWeight: 'bold',
   },
-  priceContainer: {
-    alignItems: 'flex-end',
-  },
+
   price: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
+    marginTop: 4,
   },
 });
 

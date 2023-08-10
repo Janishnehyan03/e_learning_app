@@ -1,8 +1,11 @@
+import {faHeart, faHome, faPlayCircle} from '@fortawesome/free-solid-svg-icons'; // Corrected icon import
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import React, {useEffect, useState} from 'react';
+import {ActivityIndicator, View} from 'react-native';
 import Header from './components/Header';
 import OnboardingScreen from './components/Onboarding';
 import AboutScreen from './screens/AboutScreen';
@@ -11,13 +14,16 @@ import CreatorScreen from './screens/CreatorScreen';
 import HomeScreen from './screens/HomeScreen';
 import LearnScreen from './screens/LearnScreen';
 import LoginScreen from './screens/LoginScreen';
+import MyLearning from './screens/MyLearning';
 import OtpScreen from './screens/OtpScreen';
 import PaymentScreen from './screens/PaymentScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import RegisterScreen from './screens/RegisterScreen';
-import { AuthProvider } from './utils/UserContext';
+import {AuthProvider} from './utils/UserContext';
+import WishlistScreen from './screens/Wishlist';
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -47,6 +53,51 @@ function App() {
       </View>
     );
   }
+  const HomeTabs = () => {
+    return (
+      <Tab.Navigator
+        tabBarOptions={{
+          activeTintColor: '#198780', // Active icon color
+          // activeBackgroundColor: 'green', // Active background color
+        }}>
+        <Tab.Screen
+          name="Home Screen"
+          initialRouteName={isOnboardingCompleted ? 'Home' : 'Onboarding'}
+          options={{
+            headerShown: false,
+            tabBarIcon: ({color}) => {
+              return <FontAwesomeIcon icon={faHome} size={30} color={color} />;
+            },
+          }}
+          component={HomeScreen}
+        />
+        <Tab.Screen
+          name="My Learning"
+          options={{
+            headerShown: false,
+            tabBarIcon: ({color}) => {
+              return (
+                <FontAwesomeIcon icon={faPlayCircle} size={30} color={color} />
+              );
+            },
+          }}
+          component={MyLearning}
+        />
+        <Tab.Screen
+          name="Wishlist"
+          options={{
+            headerShown: false,
+            tabBarIcon: ({color}) => {
+              return (
+                <FontAwesomeIcon icon={faHeart} size={30} color={color} />
+              );
+            },
+          }}
+          component={WishlistScreen}
+        />
+      </Tab.Navigator>
+    );
+  };
 
   return (
     <NavigationContainer>
@@ -61,9 +112,10 @@ function App() {
           />
           <Stack.Screen
             name="Home"
-            component={HomeScreen}
+            component={HomeTabs}
             options={{
               header: props => <Header {...props} />,
+              tabBarVisible: true, // Show tab bar icon on the Home screen
             }}
           />
           <Stack.Screen
