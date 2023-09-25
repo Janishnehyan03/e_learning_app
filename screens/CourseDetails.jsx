@@ -1,15 +1,15 @@
-import { faHeart } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import {faHeart} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import React, {useEffect, useState} from 'react';
+import {Image, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import RazorpayCheckout from 'react-native-razorpay';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import ShareButton from '../components/ShareButton';
 import Axios from '../utils/Axios';
-import { VIOLET_COLOR } from '../utils/Consts';
+import {VIOLET_COLOR} from '../utils/Consts';
 
 const CourseDetailsPage = ({route}) => {
   const [courseData, setCourseData] = useState(null);
@@ -18,8 +18,9 @@ const CourseDetailsPage = ({route}) => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [isAddedToWishlist, setIsAddedToWishlist] = useState(false);
-  const {slug} = route.params;
 
+  const {slug} = route.params;
+  const {path} = useRoute();
 
   const onYoutubeStateChange = event => {
     if (event === 'ended') {
@@ -111,20 +112,38 @@ const CourseDetailsPage = ({route}) => {
       console.log(error.response);
     }
   };
+  const fetchWishlist = async () => {
+    try {
+      const response = await Axios.get('/wishlist', {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem('authToken')}`, // Replace with your authentication token
+        },
+      });
+      setWishlist(response.data);
+    } catch (error) {
+      console.error('Error fetching wishlist:', error);
+    }
+  };
   const addToWishlist = async () => {
     try {
-      const existingWishlist = await AsyncStorage.getItem('@wishlist');
-      const updatedWishlist = existingWishlist
-        ? JSON.parse(existingWishlist).concat({
-            id: courseData._id,
-            title: courseData.title,
-          })
-        : [{id: courseData._id, title: courseData.title}];
+      const response = await Axios.post(
+        '/wishlist',
+        {course: courseData._id},
+        {
+          headers: {
+            Authorization: `Bearer ${await AsyncStorage.getItem('authToken')}`,
+          },
+        },
+      );
 
-      await AsyncStorage.setItem('@wishlist', JSON.stringify(updatedWishlist));
-      setIsAddedToWishlist(true);
+      if (response.status === 201) {
+        console.log('Item added to wishlist successfully');
+        fetchWishlist(); // Fetch the updated wishlist after adding an item
+      } else {
+        console.error('Failed to add item to wishlist');
+      }
     } catch (error) {
-      console.error('Error adding to wishlist:', error);
+      console.error('Error adding item to wishlist:', error);
     }
   };
 
@@ -133,21 +152,22 @@ const CourseDetailsPage = ({route}) => {
       const existingWishlist = await AsyncStorage.getItem('@wishlist');
       if (existingWishlist) {
         const wishlist = JSON.parse(existingWishlist);
-        setIsAddedToWishlist(
-          wishlist.some(course => course.id === courseData?._id),
+        const isItemInWishlist = wishlist.some(
+          course => course.id === courseData?._id,
         );
+        setIsAddedToWishlist(isItemInWishlist);
+      } else {
+        console.log('No wishlist data found in AsyncStorage.');
       }
     } catch (error) {
       console.error('Error checking wishlist status:', error);
     }
   };
-  useEffect(() => {
-    fetchCourseData();
-  }, [slug]);
 
   useEffect(() => {
+    fetchCourseData();
     checkWishlistStatus();
-  }, [route]);
+  }, [slug]);
 
   return (
     <View style={styles.container}>

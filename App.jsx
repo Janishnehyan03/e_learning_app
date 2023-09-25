@@ -56,7 +56,7 @@ function App() {
   const HomeTabs = () => {
     return (
       <Tab.Navigator
-        tabBarOptions={{
+        screenOptions={{
           activeTintColor: '#198780', // Active icon color
           // activeBackgroundColor: 'green', // Active background color
         }}>
@@ -83,7 +83,7 @@ function App() {
           }}
           component={MyLearning}
         />
-        <Tab.Screen
+        {/* <Tab.Screen
           name="Wishlist"
           options={{
             headerShown: false,
@@ -94,7 +94,7 @@ function App() {
             },
           }}
           component={WishlistScreen}
-        />
+        /> */}
       </Tab.Navigator>
     );
   };

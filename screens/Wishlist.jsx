@@ -1,44 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faHeart } from '@fortawesome/free-solid-svg-icons';
+import React, {useState, useEffect} from 'react';
+import {View, Text, FlatList, StyleSheet, TouchableOpacity} from 'react-native';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faHeart} from '@fortawesome/free-solid-svg-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useRoute} from '@react-navigation/native';
+import Axios from '../utils/Axios';
 const WishlistScreen = () => {
-    const [wishlist, setWishlist] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
 
-    useEffect(() => {
-      fetchWishlist();
-    }, []);
-  
-    const fetchWishlist = async () => {
-      try {
-        const wishlistData = await AsyncStorage.getItem('@wishlist');
-        if (wishlistData !== null) {
-          setWishlist(JSON.parse(wishlistData));
-        }
-      } catch (error) {
-        console.error('Error fetching wishlist:', error);
-      }
-    };
-  
-    const removeFromWishlist = async (courseId) => {
-      const updatedWishlist = wishlist.filter(course => course.id !== courseId);
-      setWishlist(updatedWishlist);
-      try {
-        await AsyncStorage.setItem('@wishlist', JSON.stringify(updatedWishlist));
-      } catch (error) {
-        console.error('Error updating wishlist:', error);
-      }
-    };
-  
-  const renderCourseItem = ({ item }) => (
+  const {path} = useRoute();
+  useEffect(() => {
+    fetchWishlist();
+  }, [path]);
+
+  const fetchWishlist = async () => {
+    try {
+      const response = await Axios.get('/wishlist', {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem('authToken')}`,
+        },
+      });
+      setWishlist(response.data);
+    } catch (error) {
+      console.error('Error fetching wishlist:', error);
+    }
+  };
+
+  const removeFromWishlist = async courseId => {
+    const updatedWishlist = wishlist.filter(course => course.id !== courseId);
+    setWishlist(updatedWishlist);
+    try {
+      await AsyncStorage.setItem('@wishlist', JSON.stringify(updatedWishlist));
+    } catch (error) {
+      console.error('Error updating wishlist:', error);
+    }
+  };
+
+  const renderCourseItem = ({item}) => (
     <View style={styles.courseItem}>
       <Text style={styles.courseTitle}>{item.title}</Text>
       <Text style={styles.courseInstructor}>By {item.instructor}</Text>
       <TouchableOpacity
         onPress={() => removeFromWishlist(item.id)}
-        style={styles.removeButton}
-      >
+        style={styles.removeButton}>
         <FontAwesomeIcon icon={faHeart} size={20} color="red" />
       </TouchableOpacity>
     </View>

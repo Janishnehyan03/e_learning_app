@@ -18,7 +18,6 @@ const MyLearning = () => {
     setIsLoading(true);
     try {
       const {data} = await Axios.get('/course');
-      console.log(data);
       setCourses(data.courses);
       setIsLoading(false);
     } catch (error) {
